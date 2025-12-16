@@ -4,7 +4,9 @@
   "main": "./src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "nodemon ./src/index.ts"
+    "dev": "nodemon ./src/index.ts",
+    "generate-migration": "npx drizzle-kit  generate --config src/db/drizzle.config.ts",
+    "apply-migration": "npx drizzle-kit migrate --config src/db/drizzle.config.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
