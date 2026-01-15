@@ -1,5 +1,5 @@
 {
-  "watch": ["*"],
+  "watch": ["src", ".env"],
   "ext": "*",
-  "exec": "node --import jiti/register ./src/index.ts"
+  "exec": "node --env-file=.env --import jiti/register ./src/index.ts"
 }
