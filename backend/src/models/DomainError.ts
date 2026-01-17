@@ -4,7 +4,8 @@ type Code =
   | 'validation-error'
   | 'malformed-input'
   | 'not-found'
-  | 'conflict-error';
+  | 'conflict-error'
+  | 'authentication-required';
 const internalErrorCodes: Array<Code> = ['internal-error'];
 
 export default class DomainError extends Error {
