@@ -10,7 +10,7 @@ const LoginRequest = z.object({
   password: z.string(),
 });
 interface LoginResponse {
-  idToken: string;
+  accessToken: string;
   refreshToken: string;
 }
 authRouter.post(
@@ -30,4 +30,21 @@ authRouter.post(
   }),
 );
 
+const RefreshTokenRequest = z.object({
+  refreshToken: z.string().min(1),
+});
+authRouter.post(
+  '/refresh-token',
+  endpointWrapper(async function refreshToken(
+    request: Request,
+    _response: Response,
+    _next: NextFunction,
+  ) {
+    const { refreshToken } = RefreshTokenRequest.parse(request.body);
+    const result: { accessToken: string; refreshToken } =
+      await authUsecase.refreshToken(refreshToken);
+
+    return result;
+  }),
+);
 export default authRouter;
