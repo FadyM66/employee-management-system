@@ -13,8 +13,15 @@ export function generateIdToken(payload: generateJWTParameter): string {
   });
 }
 
-export function generateRefreshToken(id: string): string {
-  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET_KEY, {
+interface GenerateRefreshTokenParameters {
+  id: string;
+  email: string;
+  role: User['role'];
+}
+export function generateRefreshToken(
+  payload: GenerateRefreshTokenParameters,
+): string {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET_KEY, {
     expiresIn: '24h',
   });
 }
@@ -28,4 +35,28 @@ export async function isPasswordCorrect(
   password: string,
 ): Promise<boolean> {
   return await bcrypt.compare(password, hashedPassword);
+}
+
+type VerifyAccessTokenReturn = Omit<User, 'password'>;
+export function verifyIdToken(accessToken: string): VerifyAccessTokenReturn {
+  return jwt.verify(
+    accessToken,
+    process.env.JWT_SECRET_KEY,
+  ) as VerifyAccessTokenReturn;
+}
+
+type VerifyRefreshTokenReturn = Omit<User, 'password'>;
+export function verifyRefreshToken(
+  refreshToken: string,
+): VerifyRefreshTokenReturn {
+  const jwtPayload = jwt.verify(
+    refreshToken,
+    process.env.JWT_REFRESH_SECRET_KEY,
+  ) as VerifyRefreshTokenReturn;
+
+  return {
+    id: jwtPayload.id,
+    email: jwtPayload.email,
+    role: jwtPayload.role,
+  };
 }
