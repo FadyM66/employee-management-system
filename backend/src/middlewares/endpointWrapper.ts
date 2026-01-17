@@ -9,14 +9,14 @@ export function endpointWrapper(
     request: ExpressRequest,
     response: ExpressResponse,
     next: NextFunction,
-  ) => Promise<Record<string, any>>,
+  ) => Promise<Record<string, any> | void>,
 ) {
   return async (
     request: ExpressRequest,
     response: ExpressResponse,
     next: NextFunction,
   ) => {
-    const result: Record<string, any> = await routeHandler(
+    const result: Record<string, any> | void = await routeHandler(
       request,
       response,
       next,
