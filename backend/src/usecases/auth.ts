@@ -44,43 +44,6 @@ async function login({
 
   return { accessToken, refreshToken };
 }
-
-interface CreateUserReturn {
-  id: string;
-  email: string;
-  role: string;
-}
-async function createUser(
-  email: string,
-  password: string,
-  role: string,
-): Promise<CreateUserReturn> {
-  const hashedPassword = await hashPassword(password);
-
-  let user: CreateUserReturn;
-  try {
-    user = await db.users.insert(email, hashedPassword, role);
-  } catch (error) {
-    if ('cause' in error && error.cause.code === '23505') {
-      throw new DomainError('conflict-error', {
-        message: 'resource already exists.',
-      });
-    } else {
-      throw new DomainError('internal-error', {
-        error,
-      });
-    }
-  }
-
-  if (!user) {
-    throw new DomainError('internal-error', {
-      message: 'user was not created successfully.',
-    });
-  }
-
-  return user;
-}
-
 interface RefreshTokenReturn {
   accessToken: string;
   refreshToken: string;
@@ -113,7 +76,6 @@ async function refreshToken(refreshToken: string): Promise<RefreshTokenReturn> {
 
 const auth = {
   login,
-  createUser,
   refreshToken,
 };
 
