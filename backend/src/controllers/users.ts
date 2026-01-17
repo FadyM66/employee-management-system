@@ -1,7 +1,7 @@
 import { Router, Response, Request, NextFunction } from 'express';
 import * as z from 'zod';
 import { endpointWrapper } from '../middlewares/endpointWrapper.ts';
-import authUsecase from '../usecases/auth.ts';
+import userUsecase from '../usecases/users.ts';
 
 const userRouter = Router();
 
@@ -11,14 +11,14 @@ const CreateUserRequest = z.object({
   role: z.uuid(),
 });
 userRouter.post(
-  '/user',
+  '/',
   endpointWrapper(async function createUser(
     request: Request,
     response: Response,
     _next: NextFunction,
   ) {
     const { email, password, role } = CreateUserRequest.parse(request.body);
-    const user = await authUsecase.createUser(email, password, role);
+    const user = await userUsecase.createUser(email, password, role);
 
     response.status(201);
 
