@@ -6,7 +6,7 @@ import express, {
   type NextFunction,
 } from 'express';
 import cors from 'cors';
-import authRouter from './controllers/auth.ts';
+import router from './controllers/index.ts';
 import DomainError from './models/DomainError.ts';
 import * as z from 'zod';
 
@@ -39,7 +39,7 @@ app.use(
   }),
 );
 
-app.use(authRouter);
+app.use(router);
 
 app.use((_request: ExpressRequest, response: ExpressResponse) => {
   response.status(404).send();
