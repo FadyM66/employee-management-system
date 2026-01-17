@@ -89,6 +89,9 @@ app.use(function globalErrorHandler(
     case 'conflict-error':
       response.status(409);
       break;
+    case 'authentication-required':
+      response.status(401);
+      break;
     default:
       return error.code satisfies never;
   }
