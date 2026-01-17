@@ -11,3 +11,9 @@ export function generateIdToken(payload: generateJWTParameter): string {
     expiresIn: '1h',
   });
 }
+
+export function generateRefreshToken(id: string): string {
+  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET_KEY, {
+    expiresIn: '24h',
+  });
+}
