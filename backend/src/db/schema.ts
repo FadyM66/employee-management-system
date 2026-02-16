@@ -1,23 +1,11 @@
-import {
-  date,
-  pgEnum,
-  pgTable,
-  text,
-  uuid,
-  varchar,
-} from 'drizzle-orm/pg-core';
+import { date, pgEnum, pgTable, text, uuid, varchar } from 'drizzle-orm/pg-core';
 
-export const employeeStatus = pgEnum('employee_status', [
-  'application_received',
-  'interview_scheduled',
-  'hired',
-  'not_accepted',
-]);
+export const employeeStatus = pgEnum('employee_status', ['application_received', 'interview_scheduled', 'hired', 'not_accepted']);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email').unique().notNull(),
-  password: text('password').notNull(),
+  hashedPassword: text('hashedPassword').notNull(),
   role: uuid('role')
     .notNull()
     .references(() => roles.id),

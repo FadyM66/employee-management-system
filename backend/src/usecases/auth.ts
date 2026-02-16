@@ -1,21 +1,26 @@
 import {
-  isPasswordCorrect,
-  generateIdToken,
+  validatePassword,
+  generateAccessToken,
   generateRefreshToken,
-  hashPassword,
-  verifyRefreshToken,
-} from '../utils/auth.ts';
+} from '../infrastructure/auth.ts';
 import db from '../db/index.ts';
 import DomainError from '../models/DomainError.ts';
-import User from '../models/User.ts';
+import type User from '../models/User.ts';
 
 interface LoginParameters {
   email: string;
   password: string;
 }
 interface LoginReturn {
+  user: {
+    id: User['id'];
+    email: User['email'];
+    role: User['role'];
+  };
   accessToken: string;
+  accessTokenExpiresAt: string;
   refreshToken: string;
+  refreshTokenExpiresAt: string;
 }
 async function login({
   email,
@@ -27,56 +32,36 @@ async function login({
     throw new DomainError('invalid-credentials');
   }
 
-  const isAuthenticated = await isPasswordCorrect(user.password, password);
+  const authenticated: boolean = await validatePassword(
+    user.hashedPassword,
+    password,
+  );
 
-  if (!isAuthenticated) {
+  if (!authenticated) {
     throw new DomainError('invalid-credentials');
   }
 
-  const payload = {
+  const { accessToken, expiresAt: accessTokenExpiresAt } = generateAccessToken({
     id: user.id,
-    email: user.email,
-    role: user.role,
-  };
-
-  const accessToken = generateIdToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  return { accessToken, refreshToken };
-}
-interface RefreshTokenReturn {
-  accessToken: string;
-  refreshToken: string;
-}
-async function refreshToken(refreshToken: string): Promise<RefreshTokenReturn> {
-  let user: Omit<User, 'password'>;
-
-  try {
-    user = verifyRefreshToken(refreshToken);
-  } catch (error) {
-    if (
-      error.message === 'jwt malformed' ||
-      error.message === 'jwt expired' ||
-      error.message === 'invalid signature'
-    ) {
-      throw new DomainError('authentication-required');
-    } else {
-      throw new DomainError('internal-error', { error });
-    }
-  }
-
-  const accessToken = generateIdToken(user);
-  const newRefreshToken = generateRefreshToken(user);
+  });
+  const { refreshToken, expiresAt: refreshTokenExpiresAt } =
+    generateRefreshToken({ id: user.id });
 
   return {
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
     accessToken,
-    refreshToken: newRefreshToken,
+    accessTokenExpiresAt,
+    refreshToken,
+    refreshTokenExpiresAt,
   };
 }
 
 const auth = {
   login,
-  refreshToken,
 };
 
 export default auth;

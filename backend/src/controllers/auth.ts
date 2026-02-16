@@ -1,32 +1,46 @@
 import { Router, Response, Request, NextFunction } from 'express';
 import * as z from 'zod';
-import { endpointWrapper } from '../middlewares/endpointWrapper.ts';
+import Router, { type Response, type Request, type NextFunction } from 'express';
 import authUsecase from '../usecases/auth.ts';
+import { endpointWrapper } from '../middlewares/endpointWrapper.ts';
+import type User from '../models/User.ts';
+import DomainError from '../models/DomainError.ts';
 
 const authRouter = Router();
 
 const LoginRequest = z.object({
-  email: z.email(),
-  password: z.string(),
+    email: z.string().max(60),
+    password: z.string().max(50),
 });
 interface LoginResponse {
+    user: Omit<User, 'hashedPassword'>;
   accessToken: string;
-  refreshToken: string;
+    expiresIn: string;
 }
 authRouter.post(
   '/login',
   endpointWrapper(async function login(
     request: Request,
-    _response: Response,
+        response: Response,
     _next: NextFunction,
-  ) {
+    ): Promise<LoginResponse> {
     const { email, password } = LoginRequest.parse(request.body);
-    const sessionData: LoginResponse = await authUsecase.login({
+        const result = await authUsecase.login({
       email,
       password,
     });
 
-    return sessionData;
+        response.cookie('refreshToken', result.refreshToken, {
+            httpOnly: true,
+            path: '/auth/refresh-token',
+            expires: new Date(result.refreshTokenExpiresAt),
+        });
+
+        return {
+            user: result.user,
+            accessToken: result.accessToken,
+            expiresIn: result.accessTokenExpiresAt,
+        };
   }),
 );
 

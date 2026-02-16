@@ -1,6 +1,6 @@
 {
-  "id": "3ab78dbd-2710-43e2-8651-f84d5c803da6",
-  "prevId": "9ba39b6d-702a-4a06-94f1-9e4983e9e889",
+  "id": "274d1e5c-d351-458d-80e2-932948ab190d",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -29,9 +29,7 @@
         "companies_name_unique": {
           "name": "companies_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -74,12 +72,8 @@
           "name": "departments_company_id_companies_id_fk",
           "tableFrom": "departments",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -87,12 +81,8 @@
           "name": "departments_head_employees_id_fk",
           "tableFrom": "departments",
           "tableTo": "employees",
-          "columnsFrom": [
-            "head"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["head"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -102,9 +92,7 @@
         "departments_name_unique": {
           "name": "departments_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -185,12 +173,8 @@
           "name": "employees_company_id_companies_id_fk",
           "tableFrom": "employees",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -198,12 +182,8 @@
           "name": "employees_department_id_departments_id_fk",
           "tableFrom": "employees",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -213,9 +193,7 @@
         "employees_email_unique": {
           "name": "employees_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -247,9 +225,7 @@
         "permissions_name_unique": {
           "name": "permissions_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -286,12 +262,8 @@
           "name": "role-permission_role_roles_id_fk",
           "tableFrom": "role-permission",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -299,12 +271,8 @@
           "name": "role-permission_permission_permissions_id_fk",
           "tableFrom": "role-permission",
           "tableTo": "permissions",
-          "columnsFrom": [
-            "permission"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["permission"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -340,9 +308,7 @@
         "roles_name_unique": {
           "name": "roles_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -366,8 +332,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "password": {
-          "name": "password",
+        "hashedPassword": {
+          "name": "hashedPassword",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -385,12 +351,8 @@
           "name": "users_role_roles_id_fk",
           "tableFrom": "users",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -400,9 +362,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -414,12 +374,7 @@
     "public.employee_status": {
       "name": "employee_status",
       "schema": "public",
-      "values": [
-        "application_received",
-        "interview_scheduled",
-        "hired",
-        "not_accepted"
-      ]
+      "values": ["application_received", "interview_scheduled", "hired", "not_accepted"]
     }
   },
   "schemas": {},

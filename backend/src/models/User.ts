@@ -1,6 +1,6 @@
 export default interface User {
   id: string;
   email: string;
-  password: string;
+  hashedPassword: string;
   role: string;
 }
