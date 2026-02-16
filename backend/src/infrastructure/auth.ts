@@ -58,3 +58,15 @@ export async function validatePassword(
 ): Promise<boolean> {
   return await bcrypt.compare(password, hashedPassword);
 }
+
+interface RefreshTokenPayload extends JwtPayload {
+  id: string;
+}
+export function verifyRefreshToken(refreshToken: string): RefreshTokenPayload {
+  const payload = jwt.verify(
+    refreshToken,
+    process.env.JWT_REFRESH_SECRET_KEY!,
+  ) as RefreshTokenPayload;
+
+  return payload;
+}
