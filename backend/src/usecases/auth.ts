@@ -2,6 +2,7 @@ import {
   validatePassword,
   generateAccessToken,
   generateRefreshToken,
+  verifyRefreshToken,
 } from '../infrastructure/auth.ts';
 import db from '../db/index.ts';
 import DomainError from '../models/DomainError.ts';
@@ -46,6 +47,64 @@ async function login({
   });
   const { refreshToken, expiresAt: refreshTokenExpiresAt } =
     generateRefreshToken({ id: user.id });
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    accessToken,
+    accessTokenExpiresAt,
+    refreshToken,
+    refreshTokenExpiresAt,
+  };
+}
+
+interface RefreshTokenParameters {
+  refreshToken: string;
+}
+interface RefreshTokenReturn {
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
+}
+async function refreshToken({
+  refreshToken: currentRefreshToken,
+}: RefreshTokenParameters): Promise<RefreshTokenReturn> {
+  if (!currentRefreshToken) {
+    throw new DomainError('authentication-required');
+  }
+
+  let id: string;
+
+  try {
+    const payload = verifyRefreshToken(currentRefreshToken);
+    id = payload.id;
+  } catch (error: unknown) {
+    if (
+      error &&
+      typeof error == 'object' &&
+      'name' in error &&
+      error.name == 'JsonWebTokenError' &&
+      'message' in error &&
+      (error.message === 'jwt malformed' ||
+        error.message === 'jwt expired' ||
+        error.message === 'invalid signature' ||
+        error.message === 'invalid token')
+    ) {
+      throw new DomainError('authentication-required');
+    } else {
+      throw new DomainError('internal-error', { error });
+    }
+  }
+
+  const { accessToken, expiresAt: accessTokenExpiresAt } = generateAccessToken({
+    id,
+  });
+  const { refreshToken, expiresAt: refreshTokenExpiresAt } =
+    generateRefreshToken({ id });
 
   return {
     user: {
