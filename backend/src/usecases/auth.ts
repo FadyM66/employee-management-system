@@ -107,6 +107,11 @@ async function refreshToken({
     generateRefreshToken({ id });
 
   return {
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
     accessToken,
     accessTokenExpiresAt,
     refreshToken,
@@ -116,7 +121,6 @@ async function refreshToken({
 
 const auth = {
   login,
-  refreshToken,
 };
 
 export default auth;
