@@ -13,20 +13,29 @@ export async function getByEmail(email: string): Promise<User | null> {
   return user;
 }
 
-interface InsertReturn {
-  id: string;
-  email: string;
-  role: string;
-}
+type InsertReturn = Pick<User, 'id' | 'email' | 'role'>;
 export async function insert(
-  email: string,
-  hashedPassword: string,
-  role: Role['id'],
+  email: User['email'],
+  hashedPassword: User['hashedPassword'],
+  role: User['role'],
 ): Promise<InsertReturn> {
   const [user] = await db
     .insert(schemas.users)
-    .values({ email, password: hashedPassword, role })
-    .returning();
+    .values({ email, hashedPassword, role })
+    .returning({
+      id: schemas.users.id,
+      email: schemas.users.email,
+      role: schemas.users.role,
+    });
 
-  return { id: user.id, email: user.email, role: user.role };
+  return user;
+}
+
+export async function getById(id: string): Promise<User | null> {
+  const [user] = await db
+    .select()
+    .from(schemas.users)
+    .where(eq(schemas.users.id, id));
+
+  return user || null;
 }

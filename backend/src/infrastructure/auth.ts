@@ -70,3 +70,19 @@ export function verifyRefreshToken(refreshToken: string): RefreshTokenPayload {
 
   return payload;
 }
+
+export async function hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, parseInt(process.env.SALT));
+}
+
+interface AccessTokenPayload extends JwtPayload {
+  id: string;
+}
+export function verifyAccessToken(accessToken: string): AccessTokenPayload {
+  const payload = jwt.verify(
+    accessToken,
+    process.env.JWT_SECRET_KEY!,
+  ) as AccessTokenPayload;
+
+  return payload;
+}

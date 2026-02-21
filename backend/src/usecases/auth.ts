@@ -3,7 +3,6 @@ import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-  verifyRefreshToken,
 } from '../infrastructure/auth.ts';
 import db from '../db/index.ts';
 import DomainError from '../models/DomainError.ts';
