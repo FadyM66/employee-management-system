@@ -9,6 +9,6 @@ const router = Router();
 router.use('/auth', authRouter);
 router.use('/user', userRouter);
 router.use('/role', rolesRouter);
-router.use('/company', companyRouter);
+router.use('/companies', companyRouter);
 
 export default router;

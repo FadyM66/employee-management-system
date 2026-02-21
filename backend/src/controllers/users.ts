@@ -2,6 +2,7 @@ import { Router, Response, Request, NextFunction } from 'express';
 import * as z from 'zod';
 import { endpointWrapper } from '../middlewares/endpointWrapper.ts';
 import userUsecase from '../usecases/users.ts';
+import User from '../models/User.ts';
 
 const userRouter = Router();
 
@@ -16,7 +17,7 @@ userRouter.post(
     request: Request,
     response: Response,
     _next: NextFunction,
-  ) {
+  ): Promise<User> {
     const { email, password, role } = CreateUserRequest.parse(request.body);
     const user = await userUsecase.createUser(email, password, role);
 

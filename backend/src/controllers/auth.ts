@@ -7,7 +7,6 @@ import Router, {
 import authUsecase from '../usecases/auth.ts';
 import { endpointWrapper } from '../middlewares/endpointWrapper.ts';
 import type User from '../models/User.ts';
-import DomainError from '../models/DomainError.ts';
 
 const authRouter = Router();
 

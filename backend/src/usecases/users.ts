@@ -1,12 +1,9 @@
 import db from '../db/index.ts';
+import { hashPassword } from '../infrastructure/auth.ts';
 import DomainError from '../models/DomainError.ts';
-import { hashPassword } from '../utils/auth.ts';
+import User from '../models/User.ts';
 
-interface CreateUserReturn {
-  id: string;
-  email: string;
-  role: string;
-}
+type CreateUserReturn = Pick<User, 'id' | 'email' | 'role'>
 async function createUser(
   email: string,
   password: string,
