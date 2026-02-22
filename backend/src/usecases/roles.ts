@@ -1,40 +1,129 @@
 import db from '../db/index.ts';
+import { verifyAccessToken } from '../infrastructure/auth.ts';
 import DomainError from '../models/DomainError.ts';
-import Role from '../models/Role.ts';
+import type Role from '../models/Role.ts';
 
-interface AddRoleParameters {
-  role: {
-    name: string;
-  };
+interface CreateRoleParameters {
+	accessToken: string;
+	name: Role['name'];
 }
-async function createRole({ role }: AddRoleParameters): Promise<Role> {
-  let newRole: Role;
+async function createRole({ accessToken, name }: CreateRoleParameters): Promise<Role> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
 
-  try {
-    newRole = await db.roles.insert(role.name);
-  } catch (error) {
-    if ('cause' in error && error.cause.code === '23505') {
-      throw new DomainError('conflict-error', {
-        message: 'resource already exists.',
-      });
-    } else {
-      throw new DomainError('internal-error', {
-        error,
-      });
-    }
-  }
+	let role: Role | null;
+	try {
+		role = await db.roles.insert(name);
+	} catch (error) {
+		if ('cause' in error && error.cause.code === '23505') {
+			throw new DomainError('conflict-error', {
+				message: 'resource already exists.',
+			});
+		}
 
-  if (!newRole) {
-    throw new DomainError('internal-error', {
-      message: 'No role was added',
-    });
-  }
+		throw new DomainError('internal-error', {
+			error,
+		});
+	}
 
-  return newRole;
+	if (!role) {
+		throw new DomainError('internal-error', {
+			message: 'No role was added',
+		});
+	}
+
+	return role;
+}
+
+interface UpdateRoleParameters {
+	accessToken: string;
+	roleId: Role['id'];
+	updates: {
+		name?: Role['name'];
+	};
+}
+async function updateRole({ accessToken, roleId, updates }: UpdateRoleParameters): Promise<Role> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	if (!updates.name) {
+		throw new DomainError('validation-error', {
+			message: 'at least one update field is required.',
+		});
+	}
+
+	let role: Role | null;
+	try {
+		role = await db.roles.update({
+			id: roleId,
+			updates,
+		});
+	} catch (error) {
+		if ('cause' in error && error.cause.code === '23505') {
+			throw new DomainError('conflict-error', {
+				message: 'resource already exists.',
+			});
+		}
+
+		throw new DomainError('internal-error', {
+			error,
+		});
+	}
+
+	if (!role) {
+		throw new DomainError('not-found');
+	}
+
+	return role;
+}
+
+interface GetRoleParameters {
+	accessToken: string;
+	roleId: Role['id'];
+}
+async function getRole({ accessToken, roleId }: GetRoleParameters): Promise<Role> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	const role = await db.roles.getById(roleId);
+	if (!role) {
+		throw new DomainError('not-found');
+	}
+
+	return role;
+}
+
+interface DeleteRoleParameters {
+	accessToken: string;
+	roleId: Role['id'];
+}
+async function deleteRole({ accessToken, roleId }: DeleteRoleParameters): Promise<void> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	const result = await db.roles.deleteById({ id: roleId });
+	if (!result) {
+		throw new DomainError('not-found');
+	}
 }
 
 const role = {
-  createRole,
+	createRole,
+	updateRole,
+	getRole,
+	deleteRole,
 };
 
 export default role;

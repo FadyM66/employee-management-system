@@ -1,30 +1,129 @@
-import { Router, Response, Request, NextFunction } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import * as z from 'zod';
 import { endpointWrapper } from '../middlewares/endpointWrapper.ts';
+import DomainError from '../models/DomainError.ts';
+import type User from '../models/User.ts';
 import userUsecase from '../usecases/users.ts';
-import User from '../models/User.ts';
 
 const userRouter = Router();
 
 const CreateUserRequest = z.object({
-  email: z.email(),
-  password: z.string().min(6),
-  role: z.uuid(),
+	email: z.email(),
+	password: z.string().min(6),
+	roleId: z.string(),
 });
 userRouter.post(
-  '/',
-  endpointWrapper(async function createUser(
-    request: Request,
-    response: Response,
-    _next: NextFunction,
-  ): Promise<User> {
-    const { email, password, role } = CreateUserRequest.parse(request.body);
-    const user = await userUsecase.createUser(email, password, role);
+	'',
+	endpointWrapper(async function createUser(
+		request: Request,
+		response: Response,
+		_next: NextFunction,
+	): Promise<Omit<User, 'hashedPassword'>> {
+		const accessToken = request.accessToken;
+		if (!accessToken) {
+			throw new DomainError('authentication-required');
+		}
 
-    response.status(201);
+		const { email, password, roleId } = CreateUserRequest.parse(request.body);
+		const user = await userUsecase.createUser({
+			accessToken,
+			email,
+			password,
+			roleId,
+		});
 
-    return user;
-  }),
+		response.status(201);
+
+		return user;
+	}),
+);
+
+const UpdateUserRequest = z.object({
+	email: z.email().optional(),
+	password: z.string().min(6).optional(),
+	role: z.uuid().optional(),
+});
+userRouter.patch(
+	'/:userId',
+	endpointWrapper(async function updateUser(
+		request: Request,
+		_response: Response,
+		_next: NextFunction,
+	): Promise<Omit<User, 'hashedPassword'>> {
+		const accessToken = request.accessToken;
+
+		const userId = request.params.userId;
+
+		if (!userId) {
+			throw new DomainError('validation-error');
+		}
+
+		if (!request.body.email && !request.body.password && !request.body.role) {
+			throw new DomainError('validation-error', {
+				message: 'at least one update field is required.',
+			});
+		}
+
+		const updates = UpdateUserRequest.parse(request.body);
+
+		const user = await userUsecase.updateUser({
+			accessToken,
+			userId,
+			updates,
+		});
+
+		return user;
+	}),
+);
+
+userRouter.get(
+	'/:userId',
+	endpointWrapper(async function getUser(
+		request: Request,
+		_response: Response,
+		_next: NextFunction,
+	): Promise<Omit<User, 'hashedPassword'>> {
+		const accessToken = request.accessToken;
+		if (!accessToken) {
+			throw new DomainError('authentication-required');
+		}
+
+		const userId = request.params.userId;
+		if (!userId) {
+			throw new DomainError('validation-error');
+		}
+
+		const user = await userUsecase.getUser({
+			accessToken,
+			userId,
+		});
+
+		return user;
+	}),
+);
+
+userRouter.delete(
+	'/:userId',
+	endpointWrapper(async function deleteUser(
+		request: Request,
+		_response: Response,
+		_next: NextFunction,
+	): Promise<void> {
+		const accessToken = request.accessToken;
+		if (!accessToken) {
+			throw new DomainError('authentication-required');
+		}
+
+		const userId = request.params.userId;
+		if (!userId) {
+			throw new DomainError('validation-error');
+		}
+
+		await userUsecase.deleteUser({
+			accessToken,
+			userId,
+		});
+	}),
 );
 
 export default userRouter;

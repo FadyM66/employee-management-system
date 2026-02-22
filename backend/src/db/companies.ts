@@ -4,57 +4,40 @@ import db from './instance.ts';
 import { eq } from 'drizzle-orm';
 
 export async function insert(name: string): Promise<Company | null> {
-  const [company] = await db
-    .insert(schemas.companies)
-    .values({ name })
-    .returning();
+	const [company] = await db.insert(schemas.companies).values({ name }).returning();
 
-  return company || null;
+	return company || null;
 }
 
 interface UpdateParameters {
-  id: string;
-  updates: {
-    name: string;
-  };
+	id: string;
+	updates: {
+		name: string;
+	};
 }
-export async function update({
-  id,
-  updates,
-}: UpdateParameters): Promise<Company | null> {
-  const [company] = await db
-    .update(schemas.companies)
-    .set(updates)
-    .where(eq(schemas.companies.id, id))
-    .returning();
+export async function update({ id, updates }: UpdateParameters): Promise<Company | null> {
+	const [company] = await db.update(schemas.companies).set(updates).where(eq(schemas.companies.id, id)).returning();
 
-  return company || null;
+	return company || null;
 }
 
 interface GetByIdParameters {
-  id: string;
+	id: string;
 }
-export async function getById({
-  id,
-}: GetByIdParameters): Promise<Company | null> {
-  const [company] = await db
-    .select()
-    .from(schemas.companies)
-    .where(eq(schemas.companies.id, id));
+export async function getById({ id }: GetByIdParameters): Promise<Company | null> {
+	const [company] = await db.select().from(schemas.companies).where(eq(schemas.companies.id, id));
 
-  return company || null;
+	return company || null;
 }
 
 interface DeleteByIdParameters {
-  id: string;
+	id: string;
 }
-export async function deleteById({
-  id,
-}: DeleteByIdParameters): Promise<boolean> {
-  const company = await db
-    .delete(schemas.companies)
-    .where(eq(schemas.companies.id, id))
-    .returning({ id: schemas.companies.id });
+export async function deleteById({ id }: DeleteByIdParameters): Promise<boolean> {
+	const company = await db
+		.delete(schemas.companies)
+		.where(eq(schemas.companies.id, id))
+		.returning({ id: schemas.companies.id });
 
-  return company.length > 0;
+	return company.length > 0;
 }
