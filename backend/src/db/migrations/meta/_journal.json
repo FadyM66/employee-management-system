@@ -8,6 +8,13 @@
       "when": 1771196378061,
       "tag": "20260215225938_broken_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771788357396,
+      "tag": "20260222192557_milky_gauntlet",
+      "breakpoints": true
     }
   ]
 }

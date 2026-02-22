@@ -4,122 +4,110 @@ import Company from '../models/Company.ts';
 import DomainError from '../models/DomainError.ts';
 
 interface CreateCompanyParameters {
-  accessToken: string;
-  name: string;
+	accessToken: string;
+	name: string;
 }
-async function createCompany({
-  accessToken,
-  name,
-}: CreateCompanyParameters): Promise<Company> {
-  try {
-    const result = verifyAccessToken(accessToken);
-  } catch {
-    throw new DomainError('authentication-required');
-  }
+async function createCompany({ accessToken, name }: CreateCompanyParameters): Promise<Company> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
 
-  // TODO: apply RBAC
+	// TODO: apply RBAC
 
-  //   const user = await db.users.getById(result.id);
-  //   const role_permissions =
+	//   const user = await db.users.getById(result.id);
+	//   const role_permissions =
 
-  const company = await db.companies.insert(name);
+	const company = await db.companies.insert(name);
 
-  return company;
+	return company;
 }
 
 interface UpdateCompanyParameters {
-  accessToken: string;
-  companyId: string;
-  updates: {
-    name: string;
-  };
+	accessToken: string;
+	companyId: string;
+	updates: {
+		name: string;
+	};
 }
-async function updateCompany({
-  accessToken,
-  companyId,
-  updates,
-}: UpdateCompanyParameters): Promise<Company> {
-  try {
-    const result = verifyAccessToken(accessToken);
-  } catch {
-    throw new DomainError('authentication-required');
-  }
+async function updateCompany({ accessToken, companyId, updates }: UpdateCompanyParameters): Promise<Company> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
 
-  // TODO: apply RBAC
+	// TODO: apply RBAC
 
-  //   const user = await db.users.getById(result.id);
-  //   const role_permissions =
+	//   const user = await db.users.getById(result.id);
+	//   const role_permissions =
 
-  const company = await db.companies.update({
-    id: companyId,
-    updates,
-  });
+	const company = await db.companies.update({
+		id: companyId,
+		updates,
+	});
 
-  return company;
+	return company;
 }
 
 interface GetCompanyParameters {
-  accessToken: string;
-  companyId: string;
+	accessToken: string;
+	companyId: string;
 }
-async function getCompany({
-  accessToken,
-  companyId,
-}: GetCompanyParameters): Promise<Company> {
-  try {
-    const result = verifyAccessToken(accessToken);
-  } catch {
-    throw new DomainError('authentication-required');
-  }
+async function getCompany({ accessToken, companyId }: GetCompanyParameters): Promise<Company> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
 
-  // TODO: apply RBAC
+	// TODO: apply RBAC
 
-  //   const user = await db.users.getById(result.id);
-  //   const role_permissions =
+	//   const user = await db.users.getById(result.id);
+	//   const role_permissions =
 
-  const company = await db.companies.getById({
-    id: companyId,
-  });
+	const company = await db.companies.getById({
+		id: companyId,
+	});
 
-  if (!company) {
-    throw new DomainError('not-found');
-  }
-  return company;
+	if (!company) {
+		throw new DomainError('not-found');
+	}
+
+	return company;
 }
 
 interface DeleteCompanyParameters {
-  accessToken: string;
-  companyId: string;
+	accessToken: string;
+	companyId: string;
 }
-async function deleteCompany({
-  accessToken,
-  companyId,
-}: DeleteCompanyParameters): Promise<void> {
-  try {
-    const result = verifyAccessToken(accessToken);
-  } catch {
-    throw new DomainError('authentication-required');
-  }
+async function deleteCompany({ accessToken, companyId }: DeleteCompanyParameters): Promise<void> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
 
-  // TODO: apply RBAC
+	// TODO: apply RBAC
 
-  //   const user = await db.users.getById(result.id);
-  //   const role_permissions =
+	//   const user = await db.users.getById(result.id);
+	//   const role_permissions =
 
-  const result = await db.companies.deleteById({
-    id: companyId,
-  });
+	const result = await db.companies.deleteById({
+		id: companyId,
+	});
 
-  if (!result) {
-    throw new DomainError('not-found');
-  }
+	if (!result) {
+		throw new DomainError('not-found');
+	}
 }
 
 const companiesUsecase = {
-  createCompany,
-  updateCompany,
-  getCompany,
-  deleteCompany,
+	createCompany,
+	updateCompany,
+	getCompany,
+	deleteCompany,
 };
 
 export default companiesUsecase;
