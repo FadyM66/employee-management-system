@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, gt, type SQL } from 'drizzle-orm';
 import type Employee from '../models/Employee.ts';
 import db from './instance.ts';
 import * as schemas from './schema.ts';
@@ -69,22 +69,18 @@ interface UpdateParameters {
 	};
 }
 export async function update({ id, updates }: UpdateParameters): Promise<Employee | null> {
-	const [employee] = await db
-		.update(schemas.employees)
-		.set(updates)
-		.where(eq(schemas.employees.id, id))
-		.returning({
-			id: schemas.employees.id,
-			email: schemas.employees.email,
-			name: schemas.employees.name,
-			designation: schemas.employees.designation,
-			status: schemas.employees.status,
-			mobile: schemas.employees.mobile,
-			address: schemas.employees.address,
-			companyId: schemas.employees.companyId,
-			departmentId: schemas.employees.departmentId,
-			hiredOn: schemas.employees.hiredOn,
-		});
+	const [employee] = await db.update(schemas.employees).set(updates).where(eq(schemas.employees.id, id)).returning({
+		id: schemas.employees.id,
+		email: schemas.employees.email,
+		name: schemas.employees.name,
+		designation: schemas.employees.designation,
+		status: schemas.employees.status,
+		mobile: schemas.employees.mobile,
+		address: schemas.employees.address,
+		companyId: schemas.employees.companyId,
+		departmentId: schemas.employees.departmentId,
+		hiredOn: schemas.employees.hiredOn,
+	});
 
 	return employee || null;
 }
@@ -110,6 +106,38 @@ export async function getById({ id }: GetByIdParameters): Promise<Employee | nul
 		.where(eq(schemas.employees.id, id));
 
 	return employee || null;
+}
+
+interface GetAllParameters {
+	pointerId?: Employee['id'];
+	limit?: number;
+}
+export async function getAll({ pointerId, limit = 10 }: GetAllParameters): Promise<Employee[]> {
+	const filters: SQL[] = [];
+
+	if (pointerId) {
+		filters.push(gt(schemas.employees.id, pointerId));
+	}
+
+	const employees = await db
+		.select({
+			id: schemas.employees.id,
+			email: schemas.employees.email,
+			name: schemas.employees.name,
+			designation: schemas.employees.designation,
+			status: schemas.employees.status,
+			mobile: schemas.employees.mobile,
+			address: schemas.employees.address,
+			companyId: schemas.employees.companyId,
+			departmentId: schemas.employees.departmentId,
+			hiredOn: schemas.employees.hiredOn,
+		})
+		.from(schemas.employees)
+		.where(filters.length ? and(...filters) : undefined)
+		.orderBy(asc(schemas.employees.id))
+		.limit(limit);
+
+	return employees;
 }
 
 interface DeleteByIdParameters {

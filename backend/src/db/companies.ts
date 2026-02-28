@@ -1,7 +1,7 @@
 import * as schemas from './schema.ts';
 import Company from '../models/Company.ts';
 import db from './instance.ts';
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, gt, type SQL } from 'drizzle-orm';
 
 export async function insert(name: string): Promise<Company | null> {
 	const [company] = await db.insert(schemas.companies).values({ name }).returning();
@@ -28,6 +28,27 @@ export async function getById({ id }: GetByIdParameters): Promise<Company | null
 	const [company] = await db.select().from(schemas.companies).where(eq(schemas.companies.id, id));
 
 	return company || null;
+}
+
+interface GetAllParameters {
+	pointerId?: Company['id'];
+	limit?: number;
+}
+export async function getAll({ pointerId, limit = 10 }: GetAllParameters): Promise<Company[]> {
+	const filters: SQL[] = [];
+
+	if (pointerId) {
+		filters.push(gt(schemas.companies.id, pointerId));
+	}
+
+	const companies = await db
+		.select()
+		.from(schemas.companies)
+		.where(filters.length ? and(...filters) : undefined)
+		.orderBy(asc(schemas.companies.id))
+		.limit(limit);
+
+	return companies;
 }
 
 interface DeleteByIdParameters {

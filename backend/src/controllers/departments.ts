@@ -80,6 +80,32 @@ departmentsRouter.patch(
 	}),
 );
 
+const GetAllRequest = z.object({
+	pointerId: z.uuid().optional(),
+	limit: z.coerce.number().int().min(1).max(100).default(10),
+});
+departmentsRouter.get(
+	'',
+	endpointWrapper(async function getAll(
+		request: Request,
+		_response: Response,
+		_next: NextFunction,
+	): Promise<Department[]> {
+		const accessToken = request.accessToken;
+		if (!accessToken) {
+			throw new DomainError('authentication-required');
+		}
+
+		const { pointerId, limit } = GetAllRequest.parse(request.query);
+
+		return await departmentsUsecase.getAll({
+			accessToken,
+			pointerId,
+			limit,
+		});
+	}),
+);
+
 departmentsRouter.get(
 	'/:departmentId',
 	endpointWrapper(async function getDepartment(

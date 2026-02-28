@@ -102,6 +102,24 @@ async function getRole({ accessToken, roleId }: GetRoleParameters): Promise<Role
 	return role;
 }
 
+interface GetAllParameters {
+	accessToken: string;
+	pointerId?: Role['id'];
+	limit?: number;
+}
+async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Promise<Role[]> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	return await db.roles.getAll({
+		pointerId,
+		limit,
+	});
+}
+
 interface DeleteRoleParameters {
 	accessToken: string;
 	roleId: Role['id'];
@@ -122,6 +140,7 @@ async function deleteRole({ accessToken, roleId }: DeleteRoleParameters): Promis
 const role = {
 	createRole,
 	updateRole,
+	getAll,
 	getRole,
 	deleteRole,
 };

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, gt, type SQL } from 'drizzle-orm';
 import type Department from '../models/Department.ts';
 import db from './instance.ts';
 import * as schemas from './schema.ts';
@@ -8,11 +8,7 @@ interface InsertParameters {
 	companyId: Department['companyId'];
 	head: Department['head'];
 }
-export async function insert({
-	name,
-	companyId,
-	head,
-}: InsertParameters): Promise<Department | null> {
+export async function insert({ name, companyId, head }: InsertParameters): Promise<Department | null> {
 	const [department] = await db
 		.insert(schemas.departments)
 		.values({
@@ -68,6 +64,32 @@ export async function getById({ id }: GetByIdParameters): Promise<Department | n
 		.where(eq(schemas.departments.id, id));
 
 	return department || null;
+}
+
+interface GetAllParameters {
+	pointerId?: Department['id'];
+	limit?: number;
+}
+export async function getAll({ pointerId, limit = 10 }: GetAllParameters): Promise<Department[]> {
+	const filters: SQL[] = [];
+
+	if (pointerId) {
+		filters.push(gt(schemas.departments.id, pointerId));
+	}
+
+	const departments = await db
+		.select({
+			id: schemas.departments.id,
+			name: schemas.departments.name,
+			companyId: schemas.departments.companyId,
+			head: schemas.departments.head,
+		})
+		.from(schemas.departments)
+		.where(filters.length ? and(...filters) : undefined)
+		.orderBy(asc(schemas.departments.id))
+		.limit(limit);
+
+	return departments;
 }
 
 interface DeleteByIdParameters {
