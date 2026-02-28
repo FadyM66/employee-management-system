@@ -127,6 +127,28 @@ async function getUser({ accessToken, userId }: GetUserParameters): Promise<Omit
 	return user;
 }
 
+interface GetAllParameters {
+	accessToken: string;
+	pointerId?: User['id'];
+	limit?: number;
+}
+async function getAll({
+	accessToken,
+	pointerId,
+	limit,
+}: GetAllParameters): Promise<Array<Omit<User, 'hashedPassword'>>> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	return await db.users.getAll({
+		pointerId,
+		limit,
+	});
+}
+
 interface DeleteUserParameters {
 	accessToken: string;
 	userId: User['id'];
@@ -147,6 +169,7 @@ async function deleteUser({ accessToken, userId }: DeleteUserParameters): Promis
 const user = {
 	createUser,
 	updateUser,
+	getAll,
 	getUser,
 	deleteUser,
 };

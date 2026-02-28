@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, gt, type SQL } from 'drizzle-orm';
 import type Role from '../models/Role.ts';
 import type User from '../models/User.ts';
 import db from './instance.ts';
@@ -35,6 +35,34 @@ export async function getById(id: User['id']): Promise<Omit<User, 'hashedPasswor
 		.where(eq(schemas.users.id, id));
 
 	return user || null;
+}
+
+interface GetAllParameters {
+	pointerId?: User['id'];
+	limit?: number;
+}
+export async function getAll({
+	pointerId,
+	limit = 10,
+}: GetAllParameters): Promise<Array<Omit<User, 'hashedPassword'>>> {
+	const filters: SQL[] = [];
+
+	if (pointerId) {
+		filters.push(gt(schemas.users.id, pointerId));
+	}
+
+	const users = await db
+		.select({
+			id: schemas.users.id,
+			email: schemas.users.email,
+			role: schemas.users.role,
+		})
+		.from(schemas.users)
+		.where(filters.length ? and(...filters) : undefined)
+		.orderBy(asc(schemas.users.id))
+		.limit(limit);
+
+	return users;
 }
 
 interface UpdateParameters {

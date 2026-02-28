@@ -78,6 +78,28 @@ rolesRouter.patch(
 	}),
 );
 
+const GetAllRequest = z.object({
+	pointerId: z.uuid().optional(),
+	limit: z.coerce.number().int().min(1).max(100).default(10),
+});
+rolesRouter.get(
+	'',
+	endpointWrapper(async function getAll(request: Request, _response: Response, _next: NextFunction): Promise<Role[]> {
+		const accessToken = request.accessToken;
+		if (!accessToken) {
+			throw new DomainError('authentication-required');
+		}
+
+		const { pointerId, limit } = GetAllRequest.parse(request.query);
+
+		return await rolesUsecase.getAll({
+			accessToken,
+			pointerId,
+			limit,
+		});
+	}),
+);
+
 rolesRouter.get(
 	'/:roleId',
 	endpointWrapper(async function getRole(request: Request, _response: Response, _next: NextFunction): Promise<Role> {

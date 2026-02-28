@@ -78,6 +78,29 @@ async function getCompany({ accessToken, companyId }: GetCompanyParameters): Pro
 	return company;
 }
 
+interface GetAllParameters {
+	accessToken: string;
+	pointerId?: Company['id'];
+	limit?: number;
+}
+async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Promise<Company[]> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	// TODO: apply RBAC
+
+	//   const user = await db.users.getById(result.id);
+	//   const role_permissions =
+
+	return await db.companies.getAll({
+		pointerId,
+		limit,
+	});
+}
+
 interface DeleteCompanyParameters {
 	accessToken: string;
 	companyId: string;
@@ -106,6 +129,7 @@ async function deleteCompany({ accessToken, companyId }: DeleteCompanyParameters
 const companiesUsecase = {
 	createCompany,
 	updateCompany,
+	getAll,
 	getCompany,
 	deleteCompany,
 };

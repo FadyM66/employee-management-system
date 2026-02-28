@@ -148,6 +148,24 @@ async function getEmployee({ accessToken, employeeId }: GetEmployeeParameters): 
 	return employee;
 }
 
+interface GetAllParameters {
+	accessToken: string;
+	pointerId?: Employee['id'];
+	limit?: number;
+}
+async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Promise<Employee[]> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	return await db.employees.getAll({
+		pointerId,
+		limit,
+	});
+}
+
 interface DeleteEmployeeParameters {
 	accessToken: string;
 	employeeId: Employee['id'];
@@ -169,6 +187,7 @@ async function deleteEmployee({ accessToken, employeeId }: DeleteEmployeeParamet
 const employees = {
 	createEmployee,
 	updateEmployee,
+	getAll,
 	getEmployee,
 	deleteEmployee,
 };

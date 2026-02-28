@@ -111,6 +111,24 @@ async function getDepartment({ accessToken, departmentId }: GetDepartmentParamet
 	return department;
 }
 
+interface GetAllParameters {
+	accessToken: string;
+	pointerId?: Department['id'];
+	limit?: number;
+}
+async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Promise<Department[]> {
+	try {
+		verifyAccessToken(accessToken);
+	} catch {
+		throw new DomainError('authentication-required');
+	}
+
+	return await db.departments.getAll({
+		pointerId,
+		limit,
+	});
+}
+
 interface DeleteDepartmentParameters {
 	accessToken: string;
 	departmentId: Department['id'];
@@ -131,6 +149,7 @@ async function deleteDepartment({ accessToken, departmentId }: DeleteDepartmentP
 const departments = {
 	createDepartment,
 	updateDepartment,
+	getAll,
 	getDepartment,
 	deleteDepartment,
 };

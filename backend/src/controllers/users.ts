@@ -76,6 +76,33 @@ userRouter.patch(
 	}),
 );
 
+const GetAllRequest = z.object({
+	pointerId: z.uuid().optional(),
+	limit: z.coerce.number().int().min(1).max(100).default(10),
+});
+userRouter.get(
+	'',
+	endpointWrapper(async function getAll(
+		request: Request,
+		_response: Response,
+		_next: NextFunction,
+	): Promise<Array<Omit<User, 'hashedPassword'>>> {
+		const accessToken = request.accessToken;
+
+		if (!accessToken) {
+			throw new DomainError('authentication-required');
+		}
+
+		const { pointerId, limit } = GetAllRequest.parse(request.query);
+
+		return await userUsecase.getAll({
+			accessToken,
+			pointerId,
+			limit,
+		});
+	}),
+);
+
 userRouter.get(
 	'/:userId',
 	endpointWrapper(async function getUser(
