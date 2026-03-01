@@ -1,19 +1,11 @@
 import db from '../db/index.ts';
-import { verifyAccessToken } from '../infrastructure/auth.ts';
 import Company from '../models/Company.ts';
 import DomainError from '../models/DomainError.ts';
 
 interface CreateCompanyParameters {
-	accessToken: string;
 	name: string;
 }
-async function createCompany({ accessToken, name }: CreateCompanyParameters): Promise<Company> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function createCompany({ name }: CreateCompanyParameters): Promise<Company> {
 	// TODO: apply RBAC
 
 	//   const user = await db.users.getById(result.id);
@@ -25,19 +17,12 @@ async function createCompany({ accessToken, name }: CreateCompanyParameters): Pr
 }
 
 interface UpdateCompanyParameters {
-	accessToken: string;
 	companyId: string;
 	updates: {
 		name: string;
 	};
 }
-async function updateCompany({ accessToken, companyId, updates }: UpdateCompanyParameters): Promise<Company> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function updateCompany({ companyId, updates }: UpdateCompanyParameters): Promise<Company> {
 	// TODO: apply RBAC
 
 	//   const user = await db.users.getById(result.id);
@@ -52,16 +37,9 @@ async function updateCompany({ accessToken, companyId, updates }: UpdateCompanyP
 }
 
 interface GetCompanyParameters {
-	accessToken: string;
 	companyId: string;
 }
-async function getCompany({ accessToken, companyId }: GetCompanyParameters): Promise<Company> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getCompany({ companyId }: GetCompanyParameters): Promise<Company> {
 	// TODO: apply RBAC
 
 	//   const user = await db.users.getById(result.id);
@@ -79,17 +57,10 @@ async function getCompany({ accessToken, companyId }: GetCompanyParameters): Pro
 }
 
 interface GetAllParameters {
-	accessToken: string;
 	pointerId?: Company['id'];
 	limit?: number;
 }
-async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Promise<Company[]> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getAll({ pointerId, limit }: GetAllParameters): Promise<Company[]> {
 	// TODO: apply RBAC
 
 	//   const user = await db.users.getById(result.id);
@@ -102,16 +73,9 @@ async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Prom
 }
 
 interface DeleteCompanyParameters {
-	accessToken: string;
 	companyId: string;
 }
-async function deleteCompany({ accessToken, companyId }: DeleteCompanyParameters): Promise<void> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function deleteCompany({ companyId }: DeleteCompanyParameters): Promise<void> {
 	// TODO: apply RBAC
 
 	//   const user = await db.users.getById(result.id);

@@ -1,26 +1,13 @@
 import db from '../db/index.ts';
-import { verifyAccessToken } from '../infrastructure/auth.ts';
 import type Department from '../models/Department.ts';
 import DomainError from '../models/DomainError.ts';
 
 interface CreateDepartmentParameters {
-	accessToken: string;
 	name: Department['name'];
 	companyId: Department['companyId'];
 	head?: Department['head'];
 }
-async function createDepartment({
-	accessToken,
-	name,
-	companyId,
-	head,
-}: CreateDepartmentParameters): Promise<Department> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function createDepartment({ name, companyId, head }: CreateDepartmentParameters): Promise<Department> {
 	let department: Department | null;
 	try {
 		department = await db.departments.insert({ name, companyId, head });
@@ -44,7 +31,6 @@ async function createDepartment({
 }
 
 interface UpdateDepartmentParameters {
-	accessToken: string;
 	departmentId: Department['id'];
 	updates: {
 		name?: Department['name'];
@@ -52,17 +38,7 @@ interface UpdateDepartmentParameters {
 		head?: Department['head'];
 	};
 }
-async function updateDepartment({
-	accessToken,
-	departmentId,
-	updates,
-}: UpdateDepartmentParameters): Promise<Department> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function updateDepartment({ departmentId, updates }: UpdateDepartmentParameters): Promise<Department> {
 	if (!updates.name && !updates.companyId && !updates.head) {
 		throw new DomainError('validation-error', {
 			message: 'at least one update field is required.',
@@ -93,16 +69,9 @@ async function updateDepartment({
 }
 
 interface GetDepartmentParameters {
-	accessToken: string;
 	departmentId: Department['id'];
 }
-async function getDepartment({ accessToken, departmentId }: GetDepartmentParameters): Promise<Department> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getDepartment({ departmentId }: GetDepartmentParameters): Promise<Department> {
 	const department = await db.departments.getById({ id: departmentId });
 	if (!department) {
 		throw new DomainError('not-found');
@@ -112,17 +81,10 @@ async function getDepartment({ accessToken, departmentId }: GetDepartmentParamet
 }
 
 interface GetAllParameters {
-	accessToken: string;
 	pointerId?: Department['id'];
 	limit?: number;
 }
-async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Promise<Department[]> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getAll({ pointerId, limit }: GetAllParameters): Promise<Department[]> {
 	return await db.departments.getAll({
 		pointerId,
 		limit,
@@ -130,16 +92,9 @@ async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Prom
 }
 
 interface DeleteDepartmentParameters {
-	accessToken: string;
 	departmentId: Department['id'];
 }
-async function deleteDepartment({ accessToken, departmentId }: DeleteDepartmentParameters): Promise<void> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function deleteDepartment({ departmentId }: DeleteDepartmentParameters): Promise<void> {
 	const result = await db.departments.deleteById({ id: departmentId });
 	if (!result) {
 		throw new DomainError('not-found');

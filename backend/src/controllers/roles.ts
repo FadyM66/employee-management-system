@@ -20,14 +20,12 @@ rolesRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Role> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { name } = CreateRoleRequest.parse(request.body);
 		const role = await rolesUsecase.createRole({
-			accessToken,
 			name,
 		});
 
@@ -50,8 +48,7 @@ rolesRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Role> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -69,7 +66,6 @@ rolesRouter.patch(
 		}
 
 		const role = await rolesUsecase.updateRole({
-			accessToken,
 			roleId,
 			updates: { name },
 		});
@@ -85,15 +81,13 @@ const GetAllRequest = z.object({
 rolesRouter.get(
 	'',
 	endpointWrapper(async function getAll(request: Request, _response: Response, _next: NextFunction): Promise<Role[]> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { pointerId, limit } = GetAllRequest.parse(request.query);
 
 		return await rolesUsecase.getAll({
-			accessToken,
 			pointerId,
 			limit,
 		});
@@ -103,8 +97,7 @@ rolesRouter.get(
 rolesRouter.get(
 	'/:roleId',
 	endpointWrapper(async function getRole(request: Request, _response: Response, _next: NextFunction): Promise<Role> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -114,7 +107,6 @@ rolesRouter.get(
 		}
 
 		const role = await rolesUsecase.getRole({
-			accessToken,
 			roleId,
 		});
 
@@ -129,8 +121,7 @@ rolesRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -140,7 +131,6 @@ rolesRouter.delete(
 		}
 
 		await rolesUsecase.deleteRole({
-			accessToken,
 			roleId,
 		});
 	}),

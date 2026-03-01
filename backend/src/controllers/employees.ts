@@ -27,8 +27,7 @@ employeesRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Employee> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -36,7 +35,6 @@ employeesRouter.post(
 			CreateEmployeeRequest.parse(request.body);
 
 		const employee = await employeesUsecase.createEmployee({
-			accessToken,
 			email,
 			name,
 			designation,
@@ -72,9 +70,7 @@ employeesRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Employee> {
-		const accessToken = request.accessToken;
-
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -86,7 +82,6 @@ employeesRouter.patch(
 
 		const updates = UpdateEmployeeRequest.parse(request.body);
 		const employee = await employeesUsecase.updateEmployee({
-			accessToken,
 			employeeId,
 			updates,
 		});
@@ -106,15 +101,13 @@ employeesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Employee[]> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { pointerId, limit } = GetAllRequest.parse(request.query);
 
 		return await employeesUsecase.getAll({
-			accessToken,
 			pointerId,
 			limit,
 		});
@@ -128,9 +121,7 @@ employeesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Employee> {
-		const accessToken = request.accessToken;
-
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -141,7 +132,6 @@ employeesRouter.get(
 		}
 
 		const employee = await employeesUsecase.getEmployee({
-			accessToken,
 			employeeId,
 		});
 
@@ -156,9 +146,7 @@ employeesRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		const accessToken = request.accessToken;
-
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -169,7 +157,6 @@ employeesRouter.delete(
 		}
 
 		await employeesUsecase.deleteEmployee({
-			accessToken,
 			employeeId,
 		});
 	}),

@@ -10,7 +10,8 @@ import router from './controllers/index.ts';
 import DomainError from './models/DomainError.ts';
 import * as z from 'zod';
 import cookieParser from 'cookie-parser';
-import { extractAccessToken } from './extractAccessToken.ts';
+import { extractAccessToken } from './middlewares/extractAccessToken.ts';
+import { authenticateRequest } from './middlewares/auth.ts';
 
 const port = parseInt(process.env.PORT!) || 3000;
 
@@ -44,6 +45,7 @@ app.use(
 app.use(cookieParser());
 
 app.use(extractAccessToken);
+app.use(authenticateRequest);
 
 app.use(router);
 

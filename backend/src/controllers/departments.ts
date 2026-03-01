@@ -19,14 +19,12 @@ departmentsRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Department> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { name, companyId, head } = CreateDepartmentRequest.parse(request.body);
 		const department = await departmentsUsecase.createDepartment({
-			accessToken,
 			name,
 			companyId,
 			head,
@@ -50,9 +48,7 @@ departmentsRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Department> {
-		const accessToken = request.accessToken;
-
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -71,7 +67,6 @@ departmentsRouter.patch(
 		}
 
 		const department = await departmentsUsecase.updateDepartment({
-			accessToken,
 			departmentId,
 			updates,
 		});
@@ -91,15 +86,13 @@ departmentsRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Department[]> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { pointerId, limit } = GetAllRequest.parse(request.query);
 
 		return await departmentsUsecase.getAll({
-			accessToken,
 			pointerId,
 			limit,
 		});
@@ -113,8 +106,7 @@ departmentsRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Department> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -125,7 +117,6 @@ departmentsRouter.get(
 		}
 
 		const department = await departmentsUsecase.getDepartment({
-			accessToken,
 			departmentId,
 		});
 
@@ -143,15 +134,12 @@ departmentsRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		const accessToken = request.accessToken;
-
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { departmentId } = DeleteDepartmentRequest.parse(request.params);
 		await departmentsUsecase.deleteDepartment({
-			accessToken,
 			departmentId,
 		});
 	}),
