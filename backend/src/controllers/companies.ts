@@ -17,9 +17,12 @@ companiesRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Company> {
+		if (!request.auth?.userId) {
+			throw new DomainError('authentication-required');
+		}
+
 		const { name } = CreateCompanyRequest.parse(request.body);
 		const company = await companyUsecase.createCompany({
-			accessToken: request.accessToken,
 			name,
 		});
 
@@ -39,6 +42,10 @@ companiesRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Company> {
+		if (!request.auth?.userId) {
+			throw new DomainError('authentication-required');
+		}
+
 		const companyId = request.params.companyId;
 
 		if (!companyId) {
@@ -47,7 +54,6 @@ companiesRouter.patch(
 
 		const { name } = UpdateCompanyRequest.parse(request.body);
 		const company = await companyUsecase.updateCompany({
-			accessToken: request.accessToken,
 			companyId,
 			updates: {
 				name,
@@ -69,15 +75,13 @@ companiesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Company[]> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { pointerId, limit } = GetAllRequest.parse(request.query);
 
 		return await companyUsecase.getAll({
-			accessToken,
 			pointerId,
 			limit,
 		});
@@ -91,6 +95,10 @@ companiesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Company> {
+		if (!request.auth?.userId) {
+			throw new DomainError('authentication-required');
+		}
+
 		const companyId = request.params.companyId;
 
 		if (!companyId) {
@@ -98,7 +106,6 @@ companiesRouter.get(
 		}
 
 		const company = await companyUsecase.getCompany({
-			accessToken: request.accessToken,
 			companyId,
 		});
 
@@ -113,6 +120,10 @@ companiesRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
+		if (!request.auth?.userId) {
+			throw new DomainError('authentication-required');
+		}
+
 		const companyId = request.params.companyId;
 
 		if (!companyId) {
@@ -120,7 +131,6 @@ companiesRouter.delete(
 		}
 
 		await companyUsecase.deleteCompany({
-			accessToken: request.accessToken,
 			companyId,
 		});
 	}),

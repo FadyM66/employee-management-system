@@ -1,19 +1,11 @@
 import db from '../db/index.ts';
-import { verifyAccessToken } from '../infrastructure/auth.ts';
 import DomainError from '../models/DomainError.ts';
 import type Role from '../models/Role.ts';
 
 interface CreateRoleParameters {
-	accessToken: string;
 	name: Role['name'];
 }
-async function createRole({ accessToken, name }: CreateRoleParameters): Promise<Role> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function createRole({ name }: CreateRoleParameters): Promise<Role> {
 	let role: Role | null;
 	try {
 		role = await db.roles.insert(name);
@@ -39,19 +31,12 @@ async function createRole({ accessToken, name }: CreateRoleParameters): Promise<
 }
 
 interface UpdateRoleParameters {
-	accessToken: string;
 	roleId: Role['id'];
 	updates: {
 		name?: Role['name'];
 	};
 }
-async function updateRole({ accessToken, roleId, updates }: UpdateRoleParameters): Promise<Role> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function updateRole({ roleId, updates }: UpdateRoleParameters): Promise<Role> {
 	if (!updates.name) {
 		throw new DomainError('validation-error', {
 			message: 'at least one update field is required.',
@@ -84,16 +69,9 @@ async function updateRole({ accessToken, roleId, updates }: UpdateRoleParameters
 }
 
 interface GetRoleParameters {
-	accessToken: string;
 	roleId: Role['id'];
 }
-async function getRole({ accessToken, roleId }: GetRoleParameters): Promise<Role> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getRole({ roleId }: GetRoleParameters): Promise<Role> {
 	const role = await db.roles.getById(roleId);
 	if (!role) {
 		throw new DomainError('not-found');
@@ -103,17 +81,10 @@ async function getRole({ accessToken, roleId }: GetRoleParameters): Promise<Role
 }
 
 interface GetAllParameters {
-	accessToken: string;
 	pointerId?: Role['id'];
 	limit?: number;
 }
-async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Promise<Role[]> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getAll({ pointerId, limit }: GetAllParameters): Promise<Role[]> {
 	return await db.roles.getAll({
 		pointerId,
 		limit,
@@ -121,16 +92,9 @@ async function getAll({ accessToken, pointerId, limit }: GetAllParameters): Prom
 }
 
 interface DeleteRoleParameters {
-	accessToken: string;
 	roleId: Role['id'];
 }
-async function deleteRole({ accessToken, roleId }: DeleteRoleParameters): Promise<void> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function deleteRole({ roleId }: DeleteRoleParameters): Promise<void> {
 	const result = await db.roles.deleteById({ id: roleId });
 	if (!result) {
 		throw new DomainError('not-found');

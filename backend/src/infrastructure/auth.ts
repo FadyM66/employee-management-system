@@ -9,9 +9,7 @@ interface GenerateAccessTokenReturn {
 	accessToken: string;
 	expiresAt: string;
 }
-export function generateAccessToken(
-	payload: GenerateAccessTokenParameters,
-): GenerateAccessTokenReturn {
+export function generateAccessToken(payload: GenerateAccessTokenParameters): GenerateAccessTokenReturn {
 	const expiresInSeconds = 60 * 60;
 	const accessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY!, {
 		expiresIn: expiresInSeconds,
@@ -31,9 +29,7 @@ interface GenerateRefreshTokenReturn {
 	refreshToken: string;
 	expiresAt: string;
 }
-export function generateRefreshToken(
-	payload: GenerateRefreshTokenParameters,
-): GenerateRefreshTokenReturn {
+export function generateRefreshToken(payload: GenerateRefreshTokenParameters): GenerateRefreshTokenReturn {
 	const expiresInSeconds = 24 * 60 * 60;
 
 	const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET_KEY!, {
@@ -56,10 +52,7 @@ interface RefreshTokenPayload extends JwtPayload {
 	id: string;
 }
 export function verifyRefreshToken(refreshToken: string): RefreshTokenPayload {
-	const payload = jwt.verify(
-		refreshToken,
-		process.env.JWT_REFRESH_SECRET_KEY!,
-	) as RefreshTokenPayload;
+	const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY!) as RefreshTokenPayload;
 
 	return payload;
 }
@@ -72,7 +65,10 @@ interface AccessTokenPayload extends JwtPayload {
 	id: string;
 }
 export function verifyAccessToken(accessToken: string): AccessTokenPayload {
-	const payload = jwt.verify(accessToken, process.env.JWT_SECRET_KEY!) as AccessTokenPayload;
-
-	return payload;
+	try {
+		const payload = jwt.verify(accessToken, process.env.JWT_SECRET_KEY!) as AccessTokenPayload;
+		return payload;
+	} catch {
+		return { id: undefined };
+	}
 }

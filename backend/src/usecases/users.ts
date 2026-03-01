@@ -1,26 +1,14 @@
 import db from '../db/index.ts';
-import { hashPassword, verifyAccessToken } from '../infrastructure/auth.ts';
+import { hashPassword } from '../infrastructure/auth.ts';
 import DomainError from '../models/DomainError.ts';
 import type User from '../models/User.ts';
 
 interface CreateUserParameters {
-	accessToken: string;
 	email: User['email'];
 	password: string;
 	roleId: User['role'];
 }
-async function createUser({
-	accessToken,
-	email,
-	password,
-	roleId,
-}: CreateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function createUser({ email, password, roleId }: CreateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
 	const hashedPassword = await hashPassword(password);
 
 	let user: Omit<User, 'hashedPassword'> | null;
@@ -46,7 +34,6 @@ async function createUser({
 }
 
 interface UpdateUserParameters {
-	accessToken: string;
 	userId: User['id'];
 	updates: {
 		email?: User['email'];
@@ -54,17 +41,7 @@ interface UpdateUserParameters {
 		role?: User['role'];
 	};
 }
-async function updateUser({
-	accessToken,
-	userId,
-	updates,
-}: UpdateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function updateUser({ userId, updates }: UpdateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
 	const dbUpdates: {
 		email?: User['email'];
 		hashedPassword?: User['hashedPassword'];
@@ -109,16 +86,9 @@ async function updateUser({
 }
 
 interface GetUserParameters {
-	accessToken: string;
 	userId: User['id'];
 }
-async function getUser({ accessToken, userId }: GetUserParameters): Promise<Omit<User, 'hashedPassword'>> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getUser({ userId }: GetUserParameters): Promise<Omit<User, 'hashedPassword'>> {
 	const user = await db.users.getById(userId);
 	if (!user) {
 		throw new DomainError('not-found');
@@ -128,21 +98,10 @@ async function getUser({ accessToken, userId }: GetUserParameters): Promise<Omit
 }
 
 interface GetAllParameters {
-	accessToken: string;
 	pointerId?: User['id'];
 	limit?: number;
 }
-async function getAll({
-	accessToken,
-	pointerId,
-	limit,
-}: GetAllParameters): Promise<Array<Omit<User, 'hashedPassword'>>> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function getAll({ pointerId, limit }: GetAllParameters): Promise<Array<Omit<User, 'hashedPassword'>>> {
 	return await db.users.getAll({
 		pointerId,
 		limit,
@@ -150,16 +109,9 @@ async function getAll({
 }
 
 interface DeleteUserParameters {
-	accessToken: string;
 	userId: User['id'];
 }
-async function deleteUser({ accessToken, userId }: DeleteUserParameters): Promise<void> {
-	try {
-		verifyAccessToken(accessToken);
-	} catch {
-		throw new DomainError('authentication-required');
-	}
-
+async function deleteUser({ userId }: DeleteUserParameters): Promise<void> {
 	const result = await db.users.deleteById({ id: userId });
 	if (!result) {
 		throw new DomainError('not-found');

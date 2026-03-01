@@ -19,14 +19,12 @@ userRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Omit<User, 'hashedPassword'>> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { email, password, roleId } = CreateUserRequest.parse(request.body);
 		const user = await userUsecase.createUser({
-			accessToken,
 			email,
 			password,
 			roleId,
@@ -50,7 +48,9 @@ userRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Omit<User, 'hashedPassword'>> {
-		const accessToken = request.accessToken;
+		if (!request.auth?.userId) {
+			throw new DomainError('authentication-required');
+		}
 
 		const userId = request.params.userId;
 
@@ -67,7 +67,6 @@ userRouter.patch(
 		const updates = UpdateUserRequest.parse(request.body);
 
 		const user = await userUsecase.updateUser({
-			accessToken,
 			userId,
 			updates,
 		});
@@ -87,16 +86,13 @@ userRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Array<Omit<User, 'hashedPassword'>>> {
-		const accessToken = request.accessToken;
-
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { pointerId, limit } = GetAllRequest.parse(request.query);
 
 		return await userUsecase.getAll({
-			accessToken,
 			pointerId,
 			limit,
 		});
@@ -110,8 +106,7 @@ userRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Omit<User, 'hashedPassword'>> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -121,7 +116,6 @@ userRouter.get(
 		}
 
 		const user = await userUsecase.getUser({
-			accessToken,
 			userId,
 		});
 
@@ -136,8 +130,7 @@ userRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		const accessToken = request.accessToken;
-		if (!accessToken) {
+		if (!request.auth?.userId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -147,7 +140,6 @@ userRouter.delete(
 		}
 
 		await userUsecase.deleteUser({
-			accessToken,
 			userId,
 		});
 	}),
