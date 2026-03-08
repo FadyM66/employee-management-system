@@ -2,12 +2,25 @@ import db from '../db/index.ts';
 import type Department from '../models/Department.ts';
 import DomainError from '../models/DomainError.ts';
 
+interface ActorContext {
+	userId: string;
+	roleId: string;
+	email: string;
+}
+
 interface CreateDepartmentParameters {
 	name: Department['name'];
 	companyId: Department['companyId'];
 	head?: Department['head'];
+	actor: ActorContext;
 }
-async function createDepartment({ name, companyId, head }: CreateDepartmentParameters): Promise<Department> {
+async function createDepartment({ name, companyId, head, actor }: CreateDepartmentParameters): Promise<Department> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('department.create')) {
+		throw new DomainError('not-authorized');
+	}
+
 	let department: Department | null;
 	try {
 		department = await db.departments.insert({ name, companyId, head });
@@ -22,9 +35,7 @@ async function createDepartment({ name, companyId, head }: CreateDepartmentParam
 	}
 
 	if (!department) {
-		throw new DomainError('internal-error', {
-			message: 'No department was added',
-		});
+		throw new DomainError('internal-error');
 	}
 
 	return department;
@@ -32,20 +43,22 @@ async function createDepartment({ name, companyId, head }: CreateDepartmentParam
 
 interface UpdateDepartmentParameters {
 	departmentId: Department['id'];
+	actor: ActorContext;
 	updates: {
 		name?: Department['name'];
 		companyId?: Department['companyId'];
 		head?: Department['head'];
 	};
 }
-async function updateDepartment({ departmentId, updates }: UpdateDepartmentParameters): Promise<Department> {
-	if (!updates.name && !updates.companyId && !updates.head) {
-		throw new DomainError('validation-error', {
-			message: 'at least one update field is required.',
-		});
+async function updateDepartment({ departmentId, actor, updates }: UpdateDepartmentParameters): Promise<Department> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('department.update')) {
+		throw new DomainError('not-authorized');
 	}
 
 	let department: Department | null;
+
 	try {
 		department = await db.departments.update({
 			id: departmentId,
@@ -70,8 +83,22 @@ async function updateDepartment({ departmentId, updates }: UpdateDepartmentParam
 
 interface GetDepartmentParameters {
 	departmentId: Department['id'];
+	actor: ActorContext;
 }
-async function getDepartment({ departmentId }: GetDepartmentParameters): Promise<Department> {
+async function getDepartment({ departmentId, actor }: GetDepartmentParameters): Promise<Department> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('department.read')) {
+		throw new DomainError('not-authorized');
+	}
+
+	const employee = await db.employees.getByEmail(actor.email);
+	const userDepartmentId = employee?.departmentId;
+
+	if (userDepartmentId && userDepartmentId !== departmentId) {
+		throw new DomainError('not-authorized');
+	}
+
 	const department = await db.departments.getById({ id: departmentId });
 	if (!department) {
 		throw new DomainError('not-found');
@@ -83,8 +110,15 @@ async function getDepartment({ departmentId }: GetDepartmentParameters): Promise
 interface GetAllParameters {
 	pointerId?: Department['id'];
 	limit?: number;
+	actor: ActorContext;
 }
-async function getAll({ pointerId, limit }: GetAllParameters): Promise<Department[]> {
+async function getAll({ pointerId, limit, actor }: GetAllParameters): Promise<Department[]> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('department.list')) {
+		throw new DomainError('not-authorized');
+	}
+
 	return await db.departments.getAll({
 		pointerId,
 		limit,
@@ -93,9 +127,17 @@ async function getAll({ pointerId, limit }: GetAllParameters): Promise<Departmen
 
 interface DeleteDepartmentParameters {
 	departmentId: Department['id'];
+	actor: ActorContext;
 }
-async function deleteDepartment({ departmentId }: DeleteDepartmentParameters): Promise<void> {
+async function deleteDepartment({ departmentId, actor }: DeleteDepartmentParameters): Promise<void> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('department.delete')) {
+		throw new DomainError('not-authorized');
+	}
+
 	const result = await db.departments.deleteById({ id: departmentId });
+
 	if (!result) {
 		throw new DomainError('not-found');
 	}

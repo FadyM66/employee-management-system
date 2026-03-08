@@ -19,7 +19,7 @@ departmentsRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Department> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -28,6 +28,11 @@ departmentsRouter.post(
 			name,
 			companyId,
 			head,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 
 		response.status(201);
@@ -48,7 +53,7 @@ departmentsRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Department> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -68,6 +73,11 @@ departmentsRouter.patch(
 
 		const department = await departmentsUsecase.updateDepartment({
 			departmentId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 			updates,
 		});
 
@@ -86,7 +96,7 @@ departmentsRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Department[]> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -95,6 +105,11 @@ departmentsRouter.get(
 		return await departmentsUsecase.getAll({
 			pointerId,
 			limit,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 	}),
 );
@@ -106,7 +121,7 @@ departmentsRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Department> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -118,6 +133,11 @@ departmentsRouter.get(
 
 		const department = await departmentsUsecase.getDepartment({
 			departmentId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 
 		return department;
@@ -134,13 +154,18 @@ departmentsRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { departmentId } = DeleteDepartmentRequest.parse(request.params);
 		await departmentsUsecase.deleteDepartment({
 			departmentId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 	}),
 );

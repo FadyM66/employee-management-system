@@ -20,13 +20,16 @@ rolesRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Role> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { name } = CreateRoleRequest.parse(request.body);
 		const role = await rolesUsecase.createRole({
 			name,
+			actor: {
+				roleId: request.auth.roleId,
+			},
 		});
 
 		response.status(201);
@@ -48,11 +51,12 @@ rolesRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Role> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const roleId = request.params.roleId;
+
 		if (!roleId) {
 			throw new DomainError('validation-error');
 		}
@@ -60,13 +64,14 @@ rolesRouter.patch(
 		const { name } = UpdateRoleRequest.parse(request.body);
 
 		if (!request.body.name) {
-			throw new DomainError('validation-error', {
-				message: 'at least one update field is required.',
-			});
+			throw new DomainError('validation-error');
 		}
 
 		const role = await rolesUsecase.updateRole({
 			roleId,
+			actor: {
+				roleId: request.auth.roleId,
+			},
 			updates: { name },
 		});
 
@@ -81,7 +86,7 @@ const GetAllRequest = z.object({
 rolesRouter.get(
 	'',
 	endpointWrapper(async function getAll(request: Request, _response: Response, _next: NextFunction): Promise<Role[]> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -90,6 +95,9 @@ rolesRouter.get(
 		return await rolesUsecase.getAll({
 			pointerId,
 			limit,
+			actor: {
+				roleId: request.auth.roleId,
+			},
 		});
 	}),
 );
@@ -97,17 +105,21 @@ rolesRouter.get(
 rolesRouter.get(
 	'/:roleId',
 	endpointWrapper(async function getRole(request: Request, _response: Response, _next: NextFunction): Promise<Role> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const roleId = request.params.roleId;
+
 		if (!roleId) {
 			throw new DomainError('validation-error');
 		}
 
 		const role = await rolesUsecase.getRole({
 			roleId,
+			actor: {
+				roleId: request.auth.roleId,
+			},
 		});
 
 		return role;
@@ -121,17 +133,21 @@ rolesRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const roleId = request.params.roleId;
+
 		if (!roleId) {
 			throw new DomainError('validation-error');
 		}
 
 		await rolesUsecase.deleteRole({
 			roleId,
+			actor: {
+				roleId: request.auth.roleId,
+			},
 		});
 	}),
 );

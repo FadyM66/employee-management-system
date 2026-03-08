@@ -2,6 +2,12 @@ import db from '../db/index.ts';
 import DomainError from '../models/DomainError.ts';
 import type Employee from '../models/Employee.ts';
 
+interface ActorContext {
+	userId: string;
+	roleId: string;
+	email: string;
+}
+
 interface CreateEmployeeParameters {
 	email: Employee['email'];
 	name: Employee['name'];
@@ -12,6 +18,7 @@ interface CreateEmployeeParameters {
 	companyId: Employee['companyId'];
 	departmentId: Employee['departmentId'];
 	hiredOn?: Employee['hiredOn'];
+	actor: ActorContext;
 }
 async function createEmployee({
 	email,
@@ -23,7 +30,20 @@ async function createEmployee({
 	companyId,
 	departmentId,
 	hiredOn,
+	actor,
 }: CreateEmployeeParameters): Promise<Employee> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('employee.create')) {
+		throw new DomainError('not-authorized');
+	}
+
+	const actorEmployee = await db.employees.getByEmail(actor.email);
+
+	if (actorEmployee && actorEmployee.departmentId !== departmentId) {
+		throw new DomainError('not-authorized');
+	}
+
 	let employee: Employee | null;
 
 	try {
@@ -49,9 +69,7 @@ async function createEmployee({
 	}
 
 	if (!employee) {
-		throw new DomainError('internal-error', {
-			message: 'No employee was added',
-		});
+		throw new DomainError('internal-error');
 	}
 
 	return employee;
@@ -59,6 +77,7 @@ async function createEmployee({
 
 interface UpdateEmployeeParameters {
 	employeeId: Employee['id'];
+	actor: ActorContext;
 	updates: {
 		email?: Employee['email'];
 		name?: Employee['name'];
@@ -71,30 +90,38 @@ interface UpdateEmployeeParameters {
 		hiredOn?: Employee['hiredOn'];
 	};
 }
-async function updateEmployee({ employeeId, updates }: UpdateEmployeeParameters): Promise<Employee> {
-	if (
-		!updates.email &&
-		!updates.name &&
-		!updates.designation &&
-		!updates.status &&
-		!updates.mobile &&
-		!updates.address &&
-		!updates.companyId &&
-		!updates.departmentId &&
-		!updates.hiredOn
-	) {
-		throw new DomainError('validation-error', {
-			message: 'at least one update field is required.',
-		});
+async function updateEmployee({ employeeId, actor, updates }: UpdateEmployeeParameters): Promise<Employee> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('employee.update')) {
+		throw new DomainError('not-authorized');
 	}
 
-	let employee: Employee | null;
+	const currentEmployee = await db.employees.getById({ id: employeeId });
+
+	if (!currentEmployee) {
+		throw new DomainError('not-found');
+	}
+
+	const actorEmployee = await db.employees.getByEmail(actor.email);
+
+	if (actorEmployee) {
+		if (currentEmployee.departmentId !== actorEmployee.departmentId) {
+			throw new DomainError('not-authorized');
+		}
+
+		if (updates.departmentId && updates.departmentId !== actorEmployee.departmentId) {
+			throw new DomainError('not-authorized');
+		}
+	}
 
 	try {
-		employee = await db.employees.update({
+		const employee = await db.employees.update({
 			id: employeeId,
 			updates,
 		});
+
+		return employee;
 	} catch (error) {
 		if ('cause' in error && error.cause.code === '23505') {
 			throw new DomainError('conflict-error', {
@@ -104,22 +131,37 @@ async function updateEmployee({ employeeId, updates }: UpdateEmployeeParameters)
 
 		throw new DomainError('internal-error', { error });
 	}
+}
+
+interface GetEmployeeParameters {
+	employeeId: Employee['id'];
+	actor: ActorContext;
+}
+async function getEmployee({ employeeId, actor }: GetEmployeeParameters): Promise<Employee> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+	const canReadEmployee = permissionNames.includes('employee.read');
+	const canReadSelfEmployee = permissionNames.includes('employee.read_self');
+
+	if (!canReadEmployee && !canReadSelfEmployee) {
+		throw new DomainError('not-authorized');
+	}
+
+	const employee = await db.employees.getById({ id: employeeId });
 
 	if (!employee) {
 		throw new DomainError('not-found');
 	}
 
-	return employee;
-}
+	const actorEmployee = await db.employees.getByEmail(actor.email);
 
-interface GetEmployeeParameters {
-	employeeId: Employee['id'];
-}
-async function getEmployee({ employeeId }: GetEmployeeParameters): Promise<Employee> {
-	const employee = await db.employees.getById({ id: employeeId });
+	if (actorEmployee) {
+		if (canReadSelfEmployee && !canReadEmployee && actorEmployee.id !== employee.id) {
+			throw new DomainError('not-authorized');
+		}
 
-	if (!employee) {
-		throw new DomainError('not-found');
+		if (canReadEmployee && actorEmployee.departmentId !== employee.departmentId) {
+			throw new DomainError('not-authorized');
+		}
 	}
 
 	return employee;
@@ -128,8 +170,25 @@ async function getEmployee({ employeeId }: GetEmployeeParameters): Promise<Emplo
 interface GetAllParameters {
 	pointerId?: Employee['id'];
 	limit?: number;
+	actor: ActorContext;
 }
-async function getAll({ pointerId, limit }: GetAllParameters): Promise<Employee[]> {
+async function getAll({ pointerId, limit, actor }: GetAllParameters): Promise<Employee[]> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('employee.list')) {
+		throw new DomainError('not-authorized');
+	}
+
+	const actorEmployee = await db.employees.getByEmail(actor.email);
+
+	if (actorEmployee) {
+		return await db.employees.getAll({
+			pointerId,
+			departmentId: actorEmployee.departmentId,
+			limit,
+		});
+	}
+
 	return await db.employees.getAll({
 		pointerId,
 		limit,
@@ -138,12 +197,31 @@ async function getAll({ pointerId, limit }: GetAllParameters): Promise<Employee[
 
 interface DeleteEmployeeParameters {
 	employeeId: Employee['id'];
+	actor: ActorContext;
 }
-async function deleteEmployee({ employeeId }: DeleteEmployeeParameters): Promise<void> {
+async function deleteEmployee({ employeeId, actor }: DeleteEmployeeParameters): Promise<void> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('employee.delete')) {
+		throw new DomainError('not-authorized');
+	}
+
+	const currentEmployee = await db.employees.getById({ id: employeeId });
+
+	if (!currentEmployee) {
+		throw new DomainError('not-found');
+	}
+
+	const actorEmployee = await db.employees.getByEmail(actor.email);
+
+	if (actorEmployee && currentEmployee.departmentId !== actorEmployee.departmentId) {
+		throw new DomainError('not-authorized');
+	}
+
 	const result = await db.employees.deleteById({ id: employeeId });
 
 	if (!result) {
-		throw new DomainError('not-found');
+		throw new DomainError('internal-error');
 	}
 }
 

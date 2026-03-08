@@ -108,15 +108,39 @@ export async function getById({ id }: GetByIdParameters): Promise<Employee | nul
 	return employee || null;
 }
 
+export async function getByEmail(email: Employee['email']): Promise<Employee | null> {
+	const [employee] = await db
+		.select({
+			id: schemas.employees.id,
+			email: schemas.employees.email,
+			name: schemas.employees.name,
+			designation: schemas.employees.designation,
+			status: schemas.employees.status,
+			mobile: schemas.employees.mobile,
+			address: schemas.employees.address,
+			companyId: schemas.employees.companyId,
+			departmentId: schemas.employees.departmentId,
+			hiredOn: schemas.employees.hiredOn,
+		})
+		.from(schemas.employees)
+		.where(eq(schemas.employees.email, email));
+
+	return employee || null;
+}
+
 interface GetAllParameters {
 	pointerId?: Employee['id'];
+	departmentId?: Employee['departmentId'];
 	limit?: number;
 }
-export async function getAll({ pointerId, limit = 10 }: GetAllParameters): Promise<Employee[]> {
+export async function getAll({ pointerId, departmentId, limit = 10 }: GetAllParameters): Promise<Employee[]> {
 	const filters: SQL[] = [];
 
 	if (pointerId) {
 		filters.push(gt(schemas.employees.id, pointerId));
+	}
+	if (departmentId) {
+		filters.push(eq(schemas.employees.departmentId, departmentId));
 	}
 
 	const employees = await db

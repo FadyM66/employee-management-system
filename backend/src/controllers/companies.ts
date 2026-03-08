@@ -17,13 +17,18 @@ companiesRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Company> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { name } = CreateCompanyRequest.parse(request.body);
 		const company = await companyUsecase.createCompany({
 			name,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 
 		response.status(201);
@@ -42,7 +47,7 @@ companiesRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Company> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -55,6 +60,11 @@ companiesRouter.patch(
 		const { name } = UpdateCompanyRequest.parse(request.body);
 		const company = await companyUsecase.updateCompany({
 			companyId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 			updates: {
 				name,
 			},
@@ -75,7 +85,7 @@ companiesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Company[]> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -84,6 +94,11 @@ companiesRouter.get(
 		return await companyUsecase.getAll({
 			pointerId,
 			limit,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 	}),
 );
@@ -95,7 +110,7 @@ companiesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Company> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -107,6 +122,11 @@ companiesRouter.get(
 
 		const company = await companyUsecase.getCompany({
 			companyId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 
 		return company;
@@ -120,7 +140,7 @@ companiesRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -132,6 +152,11 @@ companiesRouter.delete(
 
 		await companyUsecase.deleteCompany({
 			companyId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 	}),
 );

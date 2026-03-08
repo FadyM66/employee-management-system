@@ -27,7 +27,7 @@ employeesRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Employee> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -44,6 +44,11 @@ employeesRouter.post(
 			companyId,
 			departmentId,
 			hiredOn,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 
 		response.status(201);
@@ -70,7 +75,7 @@ employeesRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Employee> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -83,6 +88,11 @@ employeesRouter.patch(
 		const updates = UpdateEmployeeRequest.parse(request.body);
 		const employee = await employeesUsecase.updateEmployee({
 			employeeId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 			updates,
 		});
 
@@ -101,7 +111,7 @@ employeesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Employee[]> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -110,6 +120,11 @@ employeesRouter.get(
 		return await employeesUsecase.getAll({
 			pointerId,
 			limit,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 	}),
 );
@@ -121,7 +136,7 @@ employeesRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Employee> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -133,6 +148,11 @@ employeesRouter.get(
 
 		const employee = await employeesUsecase.getEmployee({
 			employeeId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 
 		return employee;
@@ -146,7 +166,7 @@ employeesRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId || !request.auth.email) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -158,6 +178,11 @@ employeesRouter.delete(
 
 		await employeesUsecase.deleteEmployee({
 			employeeId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+				email: request.auth.email,
+			},
 		});
 	}),
 );

@@ -3,17 +3,32 @@ import { hashPassword } from '../infrastructure/auth.ts';
 import DomainError from '../models/DomainError.ts';
 import type User from '../models/User.ts';
 
-interface CreateUserParameters {
-	email: User['email'];
-	password: string;
+interface ActorContext {
+	userId: User['id'];
 	roleId: User['role'];
 }
-async function createUser({ email, password, roleId }: CreateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
-	const hashedPassword = await hashPassword(password);
 
-	let user: Omit<User, 'hashedPassword'> | null;
+interface CreateUserParameters {
+	actor: ActorContext;
+	newUserData: {
+		email: User['email'];
+		password: string;
+		roleId: User['role'];
+	};
+}
+async function createUser({ actor, newUserData }: CreateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('user.create')) {
+		throw new DomainError('not-authorized');
+	}
+
+	const hashedPassword = await hashPassword(newUserData.password);
+	const { email, roleId } = newUserData;
+
+	let newUser: Omit<User, 'hashedPassword'> | null;
 	try {
-		user = await db.users.insert(email, hashedPassword, roleId);
+		newUser = await db.users.insert(email, hashedPassword, roleId);
 	} catch (error) {
 		if ('cause' in error && error.cause.code === '23505') {
 			throw new DomainError('conflict-error', {
@@ -26,22 +41,38 @@ async function createUser({ email, password, roleId }: CreateUserParameters): Pr
 		});
 	}
 
-	if (!user) {
+	if (!newUser) {
 		throw new DomainError('internal-error');
 	}
 
-	return user;
+	return newUser;
 }
 
 interface UpdateUserParameters {
 	userId: User['id'];
+	actor: ActorContext;
 	updates: {
 		email?: User['email'];
 		password?: string;
 		role?: User['role'];
 	};
 }
-async function updateUser({ userId, updates }: UpdateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
+async function updateUser({ userId, actor, updates }: UpdateUserParameters): Promise<Omit<User, 'hashedPassword'>> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+	const canReadUser = permissionNames.includes('user.read');
+
+	if (!permissionNames.includes('user.update')) {
+		throw new DomainError('not-authorized');
+	}
+
+	if (!canReadUser && userId !== actor.userId) {
+		throw new DomainError('not-authorized');
+	}
+
+	if (!canReadUser && updates.role !== undefined) {
+		throw new DomainError('not-authorized');
+	}
+
 	const dbUpdates: {
 		email?: User['email'];
 		hashedPassword?: User['hashedPassword'];
@@ -56,6 +87,12 @@ async function updateUser({ userId, updates }: UpdateUserParameters): Promise<Om
 	}
 	if (updates.password !== undefined) {
 		dbUpdates.hashedPassword = await hashPassword(updates.password);
+	}
+
+	if (!dbUpdates.email && !dbUpdates.hashedPassword && !dbUpdates.role) {
+		throw new DomainError('validation-error', {
+			message: 'at least one update field is required.',
+		});
 	}
 
 	let user: Omit<User, 'hashedPassword'> | null;
@@ -87,8 +124,21 @@ async function updateUser({ userId, updates }: UpdateUserParameters): Promise<Om
 
 interface GetUserParameters {
 	userId: User['id'];
+	actor: ActorContext;
 }
-async function getUser({ userId }: GetUserParameters): Promise<Omit<User, 'hashedPassword'>> {
+async function getUser({ userId, actor }: GetUserParameters): Promise<Omit<User, 'hashedPassword'>> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+	const canReadUser = permissionNames.includes('user.read');
+	const canReadSelfUser = permissionNames.includes('user.read_self');
+
+	if (!canReadUser && !canReadSelfUser) {
+		throw new DomainError('not-authorized');
+	}
+
+	if (canReadSelfUser && !canReadUser && userId !== actor.userId) {
+		throw new DomainError('not-authorized');
+	}
+
 	const user = await db.users.getById(userId);
 	if (!user) {
 		throw new DomainError('not-found');
@@ -100,8 +150,15 @@ async function getUser({ userId }: GetUserParameters): Promise<Omit<User, 'hashe
 interface GetAllParameters {
 	pointerId?: User['id'];
 	limit?: number;
+	actor: ActorContext;
 }
-async function getAll({ pointerId, limit }: GetAllParameters): Promise<Array<Omit<User, 'hashedPassword'>>> {
+async function getAll({ pointerId, limit, actor }: GetAllParameters): Promise<Array<Omit<User, 'hashedPassword'>>> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('user.list')) {
+		throw new DomainError('not-authorized');
+	}
+
 	return await db.users.getAll({
 		pointerId,
 		limit,
@@ -110,8 +167,15 @@ async function getAll({ pointerId, limit }: GetAllParameters): Promise<Array<Omi
 
 interface DeleteUserParameters {
 	userId: User['id'];
+	actor: ActorContext;
 }
-async function deleteUser({ userId }: DeleteUserParameters): Promise<void> {
+async function deleteUser({ userId, actor }: DeleteUserParameters): Promise<void> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('user.delete')) {
+		throw new DomainError('not-authorized');
+	}
+
 	const result = await db.users.deleteById({ id: userId });
 	if (!result) {
 		throw new DomainError('not-found');
