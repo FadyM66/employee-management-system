@@ -15,6 +15,13 @@
       "when": 1771788357396,
       "tag": "20260222192557_milky_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772982720559,
+      "tag": "20260308151200_tranquil_kree",
+      "breakpoints": true
     }
   ]
 }

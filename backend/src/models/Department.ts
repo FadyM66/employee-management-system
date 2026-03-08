@@ -1,8 +1,9 @@
-import Employee from './Employee.ts';
+import type Company from './Company.ts';
+import type Employee from './Employee.ts';
 
 export default interface Department {
 	id: string;
 	name: string;
-	companyId: string;
-	head: Employee['id'];
+	companyId: Company['id'];
+	head: Employee['id'] | null;
 }

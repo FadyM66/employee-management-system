@@ -2,11 +2,23 @@ import db from '../db/index.ts';
 import DomainError from '../models/DomainError.ts';
 import type Role from '../models/Role.ts';
 
+interface ActorContext {
+	roleId: string;
+}
+
 interface CreateRoleParameters {
 	name: Role['name'];
+	actor: ActorContext;
 }
-async function createRole({ name }: CreateRoleParameters): Promise<Role> {
+async function createRole({ name, actor }: CreateRoleParameters): Promise<Role> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('role.create')) {
+		throw new DomainError('not-authorized');
+	}
+
 	let role: Role | null;
+
 	try {
 		role = await db.roles.insert(name);
 	} catch (error) {
@@ -22,9 +34,7 @@ async function createRole({ name }: CreateRoleParameters): Promise<Role> {
 	}
 
 	if (!role) {
-		throw new DomainError('internal-error', {
-			message: 'No role was added',
-		});
+		throw new DomainError('internal-error');
 	}
 
 	return role;
@@ -32,11 +42,18 @@ async function createRole({ name }: CreateRoleParameters): Promise<Role> {
 
 interface UpdateRoleParameters {
 	roleId: Role['id'];
+	actor: ActorContext;
 	updates: {
 		name?: Role['name'];
 	};
 }
-async function updateRole({ roleId, updates }: UpdateRoleParameters): Promise<Role> {
+async function updateRole({ roleId, actor, updates }: UpdateRoleParameters): Promise<Role> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('role.update')) {
+		throw new DomainError('not-authorized');
+	}
+
 	if (!updates.name) {
 		throw new DomainError('validation-error', {
 			message: 'at least one update field is required.',
@@ -44,6 +61,7 @@ async function updateRole({ roleId, updates }: UpdateRoleParameters): Promise<Ro
 	}
 
 	let role: Role | null;
+
 	try {
 		role = await db.roles.update({
 			id: roleId,
@@ -70,9 +88,17 @@ async function updateRole({ roleId, updates }: UpdateRoleParameters): Promise<Ro
 
 interface GetRoleParameters {
 	roleId: Role['id'];
+	actor: ActorContext;
 }
-async function getRole({ roleId }: GetRoleParameters): Promise<Role> {
+async function getRole({ roleId, actor }: GetRoleParameters): Promise<Role> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('role.read')) {
+		throw new DomainError('not-authorized');
+	}
+
 	const role = await db.roles.getById(roleId);
+
 	if (!role) {
 		throw new DomainError('not-found');
 	}
@@ -83,8 +109,15 @@ async function getRole({ roleId }: GetRoleParameters): Promise<Role> {
 interface GetAllParameters {
 	pointerId?: Role['id'];
 	limit?: number;
+	actor: ActorContext;
 }
-async function getAll({ pointerId, limit }: GetAllParameters): Promise<Role[]> {
+async function getAll({ pointerId, limit, actor }: GetAllParameters): Promise<Role[]> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('role.list')) {
+		throw new DomainError('not-authorized');
+	}
+
 	return await db.roles.getAll({
 		pointerId,
 		limit,
@@ -93,8 +126,15 @@ async function getAll({ pointerId, limit }: GetAllParameters): Promise<Role[]> {
 
 interface DeleteRoleParameters {
 	roleId: Role['id'];
+	actor: ActorContext;
 }
-async function deleteRole({ roleId }: DeleteRoleParameters): Promise<void> {
+async function deleteRole({ roleId, actor }: DeleteRoleParameters): Promise<void> {
+	const permissionNames = await db.rolePermissions.getPermissionNamesByRoleId(actor.roleId);
+
+	if (!permissionNames.includes('role.delete')) {
+		throw new DomainError('not-authorized');
+	}
+
 	const result = await db.roles.deleteById({ id: roleId });
 	if (!result) {
 		throw new DomainError('not-found');

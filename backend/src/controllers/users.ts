@@ -19,15 +19,21 @@ userRouter.post(
 		response: Response,
 		_next: NextFunction,
 	): Promise<Omit<User, 'hashedPassword'>> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
 		const { email, password, roleId } = CreateUserRequest.parse(request.body);
 		const user = await userUsecase.createUser({
-			email,
-			password,
-			roleId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+			},
+			newUserData: {
+				email,
+				password,
+				roleId,
+			},
 		});
 
 		response.status(201);
@@ -48,7 +54,7 @@ userRouter.patch(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Omit<User, 'hashedPassword'>> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -68,6 +74,10 @@ userRouter.patch(
 
 		const user = await userUsecase.updateUser({
 			userId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+			},
 			updates,
 		});
 
@@ -86,7 +96,7 @@ userRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Array<Omit<User, 'hashedPassword'>>> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -95,6 +105,10 @@ userRouter.get(
 		return await userUsecase.getAll({
 			pointerId,
 			limit,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+			},
 		});
 	}),
 );
@@ -106,7 +120,7 @@ userRouter.get(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<Omit<User, 'hashedPassword'>> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -117,6 +131,10 @@ userRouter.get(
 
 		const user = await userUsecase.getUser({
 			userId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+			},
 		});
 
 		return user;
@@ -130,7 +148,7 @@ userRouter.delete(
 		_response: Response,
 		_next: NextFunction,
 	): Promise<void> {
-		if (!request.auth?.userId) {
+		if (!request.auth?.userId || !request.auth.roleId) {
 			throw new DomainError('authentication-required');
 		}
 
@@ -141,6 +159,10 @@ userRouter.delete(
 
 		await userUsecase.deleteUser({
 			userId,
+			actor: {
+				userId: request.auth.userId,
+				roleId: request.auth.roleId,
+			},
 		});
 	}),
 );

@@ -12,6 +12,7 @@ import * as z from 'zod';
 import cookieParser from 'cookie-parser';
 import { extractAccessToken } from './middlewares/extractAccessToken.ts';
 import { authenticateRequest } from './middlewares/auth.ts';
+import { attachUserRole } from './middlewares/attachUserRole.ts';
 
 const port = parseInt(process.env.PORT!) || 3000;
 
@@ -46,6 +47,7 @@ app.use(cookieParser());
 
 app.use(extractAccessToken);
 app.use(authenticateRequest);
+app.use(attachUserRole);
 
 app.use(router);
 
@@ -99,6 +101,9 @@ app.use(function globalErrorHandler(
 			break;
 		case 'authentication-required':
 			response.status(401);
+			break;
+		case 'not-authorized':
+			response.status(403);
 			break;
 		case 'bad-request':
 			response.status(400);

@@ -6,7 +6,8 @@ type Code =
 	| 'not-found'
 	| 'conflict-error'
 	| 'authentication-required'
-	| 'bad-request';
+	| 'bad-request'
+	| 'not-authorized';
 const internalErrorCodes: Array<Code> = ['internal-error'];
 
 export default class DomainError extends Error {

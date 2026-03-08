@@ -5,6 +5,8 @@ declare module 'express' {
 		accessToken?: string | undefined;
 		auth?: {
 			userId?: string;
+			roleId?: string;
+			email?: string;
 		};
 	}
 }

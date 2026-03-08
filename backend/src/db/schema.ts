@@ -59,12 +59,12 @@ export const permissions = pgTable('permissions', {
 	name: varchar('name').unique().notNull(),
 });
 
-export const role_permission = pgTable('role-permission', {
+export const rolePermissions = pgTable('role_permission', {
 	id: uuid('id').primaryKey().defaultRandom(),
-	role: uuid('role')
+	roleId: uuid('role_id')
 		.notNull()
 		.references(() => roles.id),
-	permission: uuid('permission')
+	permissionId: uuid('permission_id')
 		.notNull()
 		.references(() => permissions.id),
 });
